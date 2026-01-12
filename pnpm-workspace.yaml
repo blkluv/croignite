@@ -1,0 +1,6 @@
+packages:
+  - .
+  - blockchain/hardhat
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver

@@ -1,0 +1,5 @@
+{
+  "ClipYieldBoostPass": {
+    "baseUri": "https://croignite.com/boost-pass/{id}.json"
+  }
+}

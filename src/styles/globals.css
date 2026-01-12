@@ -1,0 +1,249 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lato";
+  src: url("/fonts/Lato.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Arial";
+  src: url("/fonts/Arial.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.moveable-origin {
+  display: none !important;
+}
+
+.moveable-control-box-hidden {
+  display: none !important;
+}
+
+.moveable-control-box.moveable-canvas .moveable-line.moveable-direction {
+  background: rgba(96, 165, 250, 0.95) !important;
+}
+
+.moveable-control-box.moveable-canvas .moveable-line.moveable-guideline {
+  background: rgba(34, 211, 238, 0.9) !important;
+}
+
+.moveable-control-box.moveable-canvas .moveable-line.moveable-guideline.moveable-bold {
+  background: rgba(34, 211, 238, 1) !important;
+}
+
+.moveable-control-box.moveable-timeline .moveable-line.moveable-direction {
+  background: rgba(96, 165, 250, 0.85) !important;
+}
+
+.moveable-control-box.moveable-canvas .moveable-control {
+  width: 22px !important;
+  height: 22px !important;
+  margin-top: -11px !important;
+  margin-left: -11px !important;
+  border-radius: 9999px !important;
+  background: #ffffff !important;
+  border: 2px solid rgba(96, 165, 250, 0.95) !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.7),
+    0 6px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+.moveable-control-box.moveable-canvas .moveable-rotation-control {
+  width: 28px !important;
+  height: 28px !important;
+  margin-top: -14px !important;
+  margin-left: -14px !important;
+  border-radius: 9999px !important;
+  background: rgba(0, 0, 0, 0.85) !important;
+  border: 2px solid rgba(34, 211, 238, 0.95) !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.7),
+    0 10px 22px rgba(0, 0, 0, 0.45) !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+.moveable-control-box.moveable-canvas .moveable-rotation-control::after {
+  content: "R";
+  font-size: 14px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.moveable-control-box.moveable-timeline .moveable-control {
+  width: 14px !important;
+  height: 14px !important;
+  margin-top: -7px !important;
+  margin-left: -7px !important;
+  border-radius: 9999px !important;
+  background: #ffffff !important;
+  border: 2px solid rgba(96, 165, 250, 0.9) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.65) !important;
+}
+
+@layer base {
+  :root {
+    --brand-ink: #004680;
+    --brand-ink-soft: #0a3772;
+    --brand-accent: #ff7b27;
+    --brand-accent-strong: #ffc844;
+    --brand-accent-soft: rgba(255, 123, 39, 0.18);
+    --brand-accent-text: #004680;
+    --brand-success: #01add9;
+    --brand-success-dark: #004680;
+    --brand-success-soft: rgba(1, 173, 217, 0.18);
+
+    --background: 228 100% 98%;
+    --foreground: 212 59% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 212 59% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 212 59% 11%;
+
+    --primary: 23 100% 58%;
+    --primary-foreground: 207 100% 25%;
+
+    --secondary: 207 100% 25%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 212 62% 96%;
+    --muted-foreground: 211 38% 38%;
+
+    --accent: 42 100% 63%;
+    --accent-foreground: 207 100% 25%;
+
+    --destructive: 23 100% 58%;
+    --destructive-foreground: 207 100% 25%;
+
+    --border: 212 46% 89%;
+    --input: 212 46% 89%;
+    --ring: 23 100% 58%;
+
+    --radius: 1rem;
+
+    --clip-slider-fill: rgba(0, 70, 128, 0.9);
+    --clip-slider-track: rgba(0, 70, 128, 0.25);
+  }
+
+  .dark {
+    --brand-ink: #004680;
+    --brand-ink-soft: #0a3772;
+    --brand-accent: #ff7b27;
+    --brand-accent-strong: #ffc844;
+    --brand-accent-soft: rgba(255, 123, 39, 0.26);
+    --brand-accent-text: #ffc844;
+    --brand-success: #01add9;
+    --brand-success-dark: #004680;
+    --brand-success-soft: rgba(1, 173, 217, 0.26);
+
+    --background: 212 54% 9%;
+    --foreground: 228 100% 98%;
+
+    --card: 212 54% 13%;
+    --card-foreground: 228 100% 98%;
+
+    --popover: 212 54% 13%;
+    --popover-foreground: 228 100% 98%;
+
+    --primary: 23 100% 58%;
+    --primary-foreground: 212 54% 9%;
+
+    --secondary: 207 100% 25%;
+    --secondary-foreground: 228 100% 98%;
+
+    --muted: 210 52% 16%;
+    --muted-foreground: 212 28% 72%;
+
+    --accent: 42 100% 63%;
+    --accent-foreground: 212 54% 9%;
+
+    --destructive: 23 100% 58%;
+    --destructive-foreground: 212 54% 9%;
+
+    --border: 211 45% 21%;
+    --input: 211 45% 21%;
+    --ring: 23 100% 58%;
+
+    --clip-slider-fill: rgba(255, 200, 68, 0.9);
+    --clip-slider-track: rgba(255, 200, 68, 0.35);
+  }
+
+  .feed-scroll {
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-snap-type: y mandatory;
+  }
+
+  .feed-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .feed-item {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .clip-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+  }
+
+  .clip-slider::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 9999px;
+    background: transparent;
+  }
+
+  .clip-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 12px;
+    width: 12px;
+    border-radius: 9999px;
+    background: #ffffff;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35);
+    margin-top: -4px;
+  }
+
+  .clip-slider::-moz-range-track {
+    height: 4px;
+    border-radius: 9999px;
+    background: transparent;
+  }
+
+  .clip-slider::-moz-range-thumb {
+    height: 12px;
+    width: 12px;
+    border-radius: 9999px;
+    background: #ffffff;
+    border: none;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

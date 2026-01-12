@@ -1,0 +1,39 @@
+{
+  "id": "croignite-boost-pass-pack-v1",
+  "name": "CroIgnite Boost Pass Pack",
+  "version": "1.0.0",
+  "textElements": [
+    {
+      "text": "Boosted on CroIgnite",
+      "positionStart": 0,
+      "positionEnd": 2.6,
+      "x": 120,
+      "y": 920,
+      "fontSize": 64,
+      "color": "#ffffff",
+      "backgroundColor": "rgba(0, 0, 0, 0.65)",
+      "align": "left",
+      "animation": "slide-up"
+    },
+    {
+      "text": "Yield-backed creator support",
+      "positionStart": 2.6,
+      "positionEnd": 5.2,
+      "x": 120,
+      "y": 1005,
+      "fontSize": 40,
+      "color": "#e2e8f0",
+      "backgroundColor": "rgba(2, 6, 23, 0.55)",
+      "align": "left",
+      "animation": "fade"
+    }
+  ],
+  "markers": [
+    { "time": 0, "label": "Boost Pass intro", "color": "#22c55e" },
+    { "time": 2.6, "label": "Yield tag", "color": "#38bdf8" }
+  ],
+  "notes": [
+    "Drop the Boost Pass lower third near your hook.",
+    "Use the yield tag as a credibility stamp for sponsors."
+  ]
+}

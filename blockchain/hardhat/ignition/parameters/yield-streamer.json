@@ -1,0 +1,7 @@
+{
+  "SimulatedYieldStreamerModule": {
+    "asset": "0x19f5557E23e9914A18239990f6C70D68FDF0deD5",
+    "vault": "0x16Ba3F0Ece29c930977C2aF14EFe504F845F5aDB",
+    "ratePerSecond": "100000000000000"
+  }
+}
