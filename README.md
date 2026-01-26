@@ -2,7 +2,7 @@
 
 Creator-first short-video platform where sponsorships are settled via x402 on Cronos and can mint on-chain invoice receipt NFTs.
 
-[![CroIgnite demo](public/images/croignite-demo.png)](/demo-video)
+[![CroIgnite demo](public/images/croignite-demo.png)](https://croignite.vercel.app/demo-video)
 
 ## Cronos x402 Paytech Hackathon (Submission)
 
@@ -26,8 +26,9 @@ Creator-first short-video platform where sponsorships are settled via x402 on Cr
 
 ### Project Links
 
-- **Demo video:** `/demo-video` (set `DEMO_VIDEO_URL`)
-- **Pitch deck:** `/pitch-deck` (set `PITCH_DECK_URL`)
+- **Live URL:** https://croignite.vercel.app
+- **Demo video:** https://croignite.vercel.app/demo-video
+- **Contract addresses:** https://croignite.vercel.app/contract-addresses
 
 ## What CroIgnite Builds
 
