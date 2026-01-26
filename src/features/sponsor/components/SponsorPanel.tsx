@@ -679,7 +679,9 @@ export default function SponsorPanel({
           from: user,
           requirements,
           signTypedData: (typedData) =>
-            signTypedDataAsync(typedData as any),
+            signTypedDataAsync(
+              typedData as Parameters<typeof signTypedDataAsync>[0],
+            ),
         });
 
         response = await fetch("/api/x402/sponsor", {
@@ -772,7 +774,10 @@ export default function SponsorPanel({
         const xPayment = await createX402PaymentHeader({
           from: user,
           requirements,
-          signTypedData: (typedData) => signTypedDataAsync(typedData as any),
+          signTypedData: (typedData) =>
+            signTypedDataAsync(
+              typedData as Parameters<typeof signTypedDataAsync>[0],
+            ),
         });
 
         res = await fetch("/api/sponsor/remix-pack", {
@@ -1253,12 +1258,12 @@ export default function SponsorPanel({
               <Badge
                 variant={
                   x402Tx.status === "failed"
-                    ? "destructive"
+                    ? "warning"
                     : x402Tx.status === "confirmed"
                       ? "success"
                       : x402Tx.status === "pending"
-                        ? "warning"
-                        : "secondary"
+                        ? "outline"
+                        : "default"
                 }
               >
                 {x402Label}

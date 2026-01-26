@@ -129,7 +129,7 @@ export default function YieldStreamingPanel({ vaultAddress }: YieldStreamingPane
     ? new Date(Number(lastDripValue) * 1000).toLocaleString()
     : "—";
 
-  const canSync = Boolean(isOnCronos && writeContractAsync && bufferValue > 0n);
+  const canSync = Boolean(isOnCronos && bufferValue > 0n);
 
   const receipt = useWaitForTransactionReceipt({
     chainId: cronosTestnetContracts.chainId,

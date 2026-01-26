@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useAccount, useChainId, useSwitchChain, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useSwitchChain, useWaitForTransactionReceipt } from "wagmi";
 import { getAddress, isAddress } from "viem";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +32,6 @@ export default function BoostPassClaimCard({
   latestEpoch,
 }: BoostPassClaimCardProps) {
   const { address, isConnected } = useAccount();
-  const chainId = useChainId();
   const { switchChainAsync } = useSwitchChain();
   const {
     currentEpoch,
@@ -48,8 +47,6 @@ export default function BoostPassClaimCard({
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [claimEpoch, setClaimEpoch] = useState<number | null>(null);
   const [loggedTx, setLoggedTx] = useState<string | null>(null);
-
-  const isOnNetwork = chainId === cronosTestnetContracts.chainId;
 
   const epochNumber = currentEpoch !== null ? Number(currentEpoch) : null;
   const epochPublished = typeof epochNumber === "number" && epochNumber > 0;

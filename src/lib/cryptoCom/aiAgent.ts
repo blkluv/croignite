@@ -174,7 +174,10 @@ export function getCdcAiAgentOptions(context: QueryContext[] = []) {
 
 export async function queryCdcAiAgent(prompt: string, context: QueryContext[] = []) {
   const options = getCdcAiAgentOptions(context);
-  const payload = { query: prompt, options };
+  const payload: Record<string, JsonValue> = {
+    query: prompt,
+    options: options as unknown as JsonValue,
+  };
 
   try {
     return await postAiAgentRequest(payload);

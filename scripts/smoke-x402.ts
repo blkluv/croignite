@@ -8,19 +8,20 @@ import {
 } from "@crypto.com/facilitator-client";
 import { ethers } from "ethers";
 
-const buyerKey = process.env.X402_TEST_BUYER_PRIVATE_KEY;
-const sellerWallet = process.env.X402_SELLER_WALLET;
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing ${name} in env.`);
+  }
+  return value;
+}
+
+const buyerKey = requireEnv("X402_TEST_BUYER_PRIVATE_KEY");
+const sellerWallet = requireEnv("X402_SELLER_WALLET");
 const rpcUrl =
   process.env.CRONOS_TESTNET_RPC_URL ??
   process.env.NEXT_PUBLIC_CRONOS_TESTNET_RPC_URL ??
   "https://evm-t3.cronos.org";
-
-if (!buyerKey) {
-  throw new Error("Missing X402_TEST_BUYER_PRIVATE_KEY in env.");
-}
-if (!sellerWallet) {
-  throw new Error("Missing X402_SELLER_WALLET in env.");
-}
 
 const amount =
   process.env.X402_DEFAULT_AMOUNT && /^\d+$/.test(process.env.X402_DEFAULT_AMOUNT)

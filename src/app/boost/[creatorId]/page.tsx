@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useMemo, useRef, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { getAddress, isAddress } from "viem";
 import MainLayout from "@/app/layouts/MainLayout";
@@ -89,31 +89,20 @@ export default function BoostPage({ params }: BoostPageProps) {
   const isCreatorConnected =
     Boolean(connectedWallet && creatorWallet) && connectedWallet === creatorWallet;
 
-  const stopProvisionPolling = () => {
+  const stopProvisionPolling = useCallback(() => {
     if (provisionPollRef.current) {
       clearTimeout(provisionPollRef.current);
       provisionPollRef.current = null;
     }
-  };
+  }, []);
 
   useEffect(() => {
     return () => {
       stopProvisionPolling();
     };
-  }, []);
+  }, [stopProvisionPolling]);
 
-  useEffect(() => {
-    if (status !== "ready") return;
-    if (vaultRecord) return;
-    if (!isCreatorConnected) return;
-    if (isProvisioning) return;
-    if (autoProvisionRef.current) return;
-
-    autoProvisionRef.current = true;
-    void handleProvisionVault();
-  }, [status, vaultRecord, isCreatorConnected, isProvisioning]);
-
-  const pollProvisioning = async (attempt = 0) => {
+  const pollProvisioning = useCallback(async (attempt = 0) => {
     if (!creatorWallet) return;
 
     try {
@@ -159,9 +148,9 @@ export default function BoostPage({ params }: BoostPageProps) {
     } catch {
       // keep silent; manual retry remains available
     }
-  };
+  }, [creatorWallet, stopProvisionPolling]);
 
-  const handleProvisionVault = async () => {
+  const handleProvisionVault = useCallback(async () => {
     if (!creatorWallet) return;
 
     setIsProvisioning(true);
@@ -214,7 +203,18 @@ export default function BoostPage({ params }: BoostPageProps) {
     } finally {
       setIsProvisioning(false);
     }
-  };
+  }, [creatorWallet, pollProvisioning, stopProvisionPolling]);
+
+  useEffect(() => {
+    if (status !== "ready") return;
+    if (vaultRecord) return;
+    if (!isCreatorConnected) return;
+    if (isProvisioning) return;
+    if (autoProvisionRef.current) return;
+
+    autoProvisionRef.current = true;
+    void handleProvisionVault();
+  }, [status, vaultRecord, isCreatorConnected, isProvisioning, handleProvisionVault]);
 
   return (
     <MainLayout>
@@ -333,12 +333,11 @@ export default function BoostPage({ params }: BoostPageProps) {
                 </CardContent>
               </Card>
 
-                <YieldPanel
-                  vaultAddress={vaultRecord.vault as `0x${string}`}
-                  title={`Boost ${creatorLabel}`}
-                  description="Creator boost vault on Cronos Testnet."
-                  yieldSourceCopy="Boost vaults accrue yield when sponsorship revenue or strategy returns are routed in; sponsorship net deposits mint creator shares without diluting boosters."
-                  returnTo={`/boost/${creatorId}`}
+              <YieldPanel
+                vaultAddress={vaultRecord.vault as `0x${string}`}
+                title={`Boost ${creatorLabel}`}
+                description="Creator boost vault on Cronos Testnet."
+                yieldSourceCopy="Boost vaults accrue yield when sponsorship revenue or strategy returns are routed in; sponsorship net deposits mint creator shares without diluting boosters."
                 receiptKind="boostDeposit"
                 receiptCreatorId={creatorId}
                 receiptTitle="Boost receipt"

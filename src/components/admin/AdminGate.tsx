@@ -7,7 +7,6 @@ import { useAccount, useDisconnect } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Button } from "@/components/ui/button";
 import { WalletConnectButton } from "@/components/ui/WalletConnectButton";
-import WalletGateSkeleton from "@/components/feedback/WalletGateSkeleton";
 import { isAdminAddress } from "@/lib/admin/adminAllowlist";
 import { formatShortHash } from "@/lib/utils";
 

@@ -8,16 +8,19 @@ import {
 
 const facilitator = new Facilitator({ network: CronosNetwork.CronosTestnet });
 
-const buyerPrivateKey = process.env.X402_TEST_BUYER_PRIVATE_KEY;
-const sellerWallet = process.env.X402_SELLER_WALLET;
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing ${name}.`);
+  }
+  return value;
+}
+
+const buyerPrivateKey = requireEnv("X402_TEST_BUYER_PRIVATE_KEY");
+const sellerWallet = requireEnv("X402_SELLER_WALLET");
 const rpcUrl = process.env.CRONOS_TESTNET_RPC_URL ?? "https://evm-t3.cronos.org";
 const defaultAmount = process.env.X402_DEFAULT_AMOUNT ?? "1000000";
 const amount = process.argv[2] ?? defaultAmount;
-
-if (!buyerPrivateKey || !sellerWallet) {
-  console.error("Missing X402_TEST_BUYER_PRIVATE_KEY or X402_SELLER_WALLET.");
-  process.exit(1);
-}
 
 if (!/^\d+$/.test(amount)) {
   console.error("Amount must be a base-units integer string (e.g. 1000000).");

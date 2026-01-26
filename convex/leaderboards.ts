@@ -91,7 +91,11 @@ export const recompute = internalMutation({
         compareBigIntDesc(BigInt(a.totalWei), BigInt(b.totalWei)),
       )
       .slice(0, 10)
-      .map(({ totalWei, ...rest }) => rest);
+      .map(({ creatorId, sponsoredWei, boostWei }) => ({
+        creatorId,
+        sponsoredWei,
+        boostWei,
+      }));
 
     const topBoosters = Array.from(boosterTotals.entries())
       .map(([wallet, boostWei]) => ({

@@ -101,11 +101,16 @@ export function validatePaywallHeader(args: {
   return decoded;
 }
 
+type PaywallSettleResponse = Awaited<ReturnType<typeof facilitator.settlePayment>>;
+type PaywallSettleResult =
+  | { ok: true; status: 200; settle: PaywallSettleResponse }
+  | { ok: false; status: 402 | 429; reason: string };
+
 export async function verifyAndSettlePaywall(args: {
   paymentHeader: string;
   paymentRequirements: ReturnType<typeof buildPaywallRequirements>;
   ip?: string;
-}) {
+}): Promise<PaywallSettleResult> {
   const { paymentHeader, paymentRequirements, ip } = args;
 
   const verifyBody = facilitator.buildVerifyRequest(
@@ -118,7 +123,7 @@ export async function verifyAndSettlePaywall(args: {
   if (!verify.isValid) {
     return {
       ok: false,
-      status: 402 as const,
+      status: 402,
       reason: verify.invalidReason ?? "Payment verification failed.",
     };
   }
@@ -127,12 +132,12 @@ export async function verifyAndSettlePaywall(args: {
     try {
       await x402SettleLimiter.consume(ip);
     } catch {
-      return {
-        ok: false,
-        status: 429 as const,
-        reason: "Too many settlement attempts. Please retry shortly.",
-      };
-    }
+    return {
+      ok: false,
+      status: 429,
+      reason: "Too many settlement attempts. Please retry shortly.",
+    };
+  }
   }
 
   const settle = await facilitator.settlePayment(verifyBody);
@@ -140,14 +145,14 @@ export async function verifyAndSettlePaywall(args: {
   if (settle.event !== X402EventType.PaymentSettled) {
     return {
       ok: false,
-      status: 402 as const,
+      status: 402,
       reason: settle.error ?? "Payment settlement failed.",
     };
   }
 
   return {
     ok: true,
-    status: 200 as const,
+    status: 200,
     settle,
   };
 }

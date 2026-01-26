@@ -10,7 +10,6 @@ Creator-first short-video platform where sponsorships are settled via x402 on Cr
 - **Network:** Cronos EVM Testnet (`338`)
 - **Settlement asset:** devUSDC.e (gas in tCRO)
 - **Demo runbook:** `docs/youtube-demo-script.md`
-- **Optional redirects:** `/demo-video` (set `DEMO_VIDEO_URL`) and `/pitch-deck` (set `PITCH_DECK_URL`)
 
 ### Tracks We Joined + Why We Win
 

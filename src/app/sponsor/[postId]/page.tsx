@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useMemo, useRef, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import MainLayout from "@/app/layouts/MainLayout";
@@ -133,32 +133,20 @@ export default function SponsorPage({ params }: SponsorPageProps) {
     }
   }, [campaign]);
 
-  const stopProvisionPolling = () => {
+  const stopProvisionPolling = useCallback(() => {
     if (provisionPollRef.current) {
       clearTimeout(provisionPollRef.current);
       provisionPollRef.current = null;
     }
-  };
+  }, []);
 
   useEffect(() => {
     return () => {
       stopProvisionPolling();
     };
-  }, []);
+  }, [stopProvisionPolling]);
 
-  useEffect(() => {
-    if (status !== "ready") return;
-    if (!post?.profile?.user_id) return;
-    if (vaultRecord) return;
-    if (!isCreatorConnected) return;
-    if (isProvisioning) return;
-    if (autoProvisionRef.current) return;
-
-    autoProvisionRef.current = true;
-    void handleProvisionVault();
-  }, [status, post, vaultRecord, isCreatorConnected, isProvisioning]);
-
-  const pollProvisioning = async (attempt = 0) => {
+  const pollProvisioning = useCallback(async (attempt = 0) => {
     if (!post?.user_id) return;
 
     try {
@@ -199,9 +187,9 @@ export default function SponsorPage({ params }: SponsorPageProps) {
     } catch {
       // keep silent; manual retry remains available
     }
-  };
+  }, [post?.user_id, stopProvisionPolling]);
 
-  const handleProvisionVault = async () => {
+  const handleProvisionVault = useCallback(async () => {
     if (!post?.user_id) return;
 
     setIsProvisioning(true);
@@ -254,7 +242,19 @@ export default function SponsorPage({ params }: SponsorPageProps) {
     } finally {
       setIsProvisioning(false);
     }
-  };
+  }, [post?.user_id, pollProvisioning, stopProvisionPolling]);
+
+  useEffect(() => {
+    if (status !== "ready") return;
+    if (!post?.profile?.user_id) return;
+    if (vaultRecord) return;
+    if (!isCreatorConnected) return;
+    if (isProvisioning) return;
+    if (autoProvisionRef.current) return;
+
+    autoProvisionRef.current = true;
+    void handleProvisionVault();
+  }, [status, post, vaultRecord, isCreatorConnected, isProvisioning, handleProvisionVault]);
 
   return (
     <MainLayout>

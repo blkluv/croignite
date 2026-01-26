@@ -157,9 +157,14 @@ function formatAgentResponse(response: unknown) {
     return "No response returned.";
   }
 
+  type AgentResult = {
+    message?: string;
+    data?: { message?: string; response?: { message?: string }; answer?: string };
+  };
+
   const record = response as {
     message?: string;
-    results?: Array<{ message?: string; data?: any }>;
+    results?: AgentResult[];
     result?: { message?: string };
     data?: { message?: string; response?: { message?: string }; answer?: string };
     object?: { message?: string; response?: { message?: string }; answer?: string };

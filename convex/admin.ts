@@ -19,8 +19,6 @@ const TABLES = [
   "boostPassClaims",
 ] as const;
 
-type TableName = (typeof TABLES)[number];
-
 export const truncateAll = mutation({
   args: {
     secret: v.optional(v.string()),

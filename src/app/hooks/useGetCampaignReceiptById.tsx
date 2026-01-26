@@ -1,16 +1,20 @@
 import { convexClient } from "@/lib/convex/client";
 import { getCampaignReceipt, getX402CampaignReceipt } from "@/lib/convex/functions";
-import type { CampaignReceiptView } from "@/app/types";
+import type {
+  CampaignReceipt,
+  CampaignReceiptView,
+  X402CampaignReceipt,
+} from "@/app/types";
 
 const useGetCampaignReceiptById = async (
   campaignId: string,
 ): Promise<CampaignReceiptView | null> => {
   if (!campaignId) return null;
-  let onchain: CampaignReceiptView["receipt"] | null = null;
+  let onchain: CampaignReceipt | null = null;
   try {
     onchain = (await convexClient.query(getCampaignReceipt, {
       campaignId,
-    })) as CampaignReceiptView["receipt"] | null;
+    })) as CampaignReceipt | null;
   } catch {
     onchain = null;
   }
@@ -19,11 +23,11 @@ const useGetCampaignReceiptById = async (
     return { type: "onchain", receipt: onchain };
   }
 
-  let x402: CampaignReceiptView["receipt"] | null = null;
+  let x402: X402CampaignReceipt | null = null;
   try {
     x402 = (await convexClient.query(getX402CampaignReceipt, {
       receiptId: campaignId,
-    })) as CampaignReceiptView["receipt"] | null;
+    })) as X402CampaignReceipt | null;
   } catch {
     x402 = null;
   }

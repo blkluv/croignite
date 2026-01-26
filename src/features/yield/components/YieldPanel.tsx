@@ -42,7 +42,6 @@ type YieldPanelProps = {
   vaultAddress?: Address;
   title?: string;
   description?: string;
-  returnTo?: string;
   receiptKind?: VaultTxKind;
   receiptCreatorId?: string;
   receiptTitle?: string;
@@ -61,7 +60,6 @@ export default function YieldPanel({
   vaultAddress,
   title,
   description,
-  returnTo,
   receiptKind = "yieldDeposit",
   receiptCreatorId,
   receiptTitle,
@@ -235,7 +233,6 @@ export default function YieldPanel({
   const assetDecimalsValue =
     typeof assetDecimals === "number" ? assetDecimals : 18;
   const allowanceValue = typeof allowance === "bigint" ? allowance : 0n;
-  const nativeBalanceValue = nativeBalance?.value ?? 0n;
   const assetBalanceValue =
     typeof assetBalanceRaw === "bigint" ? assetBalanceRaw : 0n;
   const shareBalanceValue = typeof shareBalance === "bigint" ? shareBalance : 0n;

@@ -26,7 +26,7 @@ export default function X402DemoClient() {
   const amountBaseUnits = useMemo(() => {
     try {
       return parseUnits(amount, USDCE_DECIMALS).toString();
-    } catch (error) {
+    } catch {
       return null;
     }
   }, [amount]);
@@ -56,7 +56,7 @@ export default function X402DemoClient() {
       );
       try {
         await switchChainAsync({ chainId: cronosConfig.chainId });
-      } catch (error) {
+      } catch {
         setLog(
           `Please switch your wallet to Cronos Testnet (chainId ${cronosConfig.chainId}) and try again.`,
         );
@@ -87,7 +87,8 @@ export default function X402DemoClient() {
     const xPayment = await createX402PaymentHeader({
       from: address,
       requirements: req,
-      signTypedData: (typedData) => signTypedDataAsync(typedData as any),
+      signTypedData: (typedData) =>
+        signTypedDataAsync(typedData as Parameters<typeof signTypedDataAsync>[0]),
     });
 
     setLog((p) => p + "3) Retrying request with X-PAYMENT header...\n");

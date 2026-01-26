@@ -84,7 +84,7 @@ export function ClipVideoPlayer({
 
       console.warn(error);
     });
-  }, [setFeedVolume]);
+  }, []);
 
   useEffect(() => {
     const video = videoRef.current;

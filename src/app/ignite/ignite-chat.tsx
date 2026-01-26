@@ -144,7 +144,8 @@ export default function IgniteChat() {
         const xPayment = await createX402PaymentHeader({
           from: address!,
           requirements,
-          signTypedData: (typedData) => signTypedDataAsync(typedData as any),
+          signTypedData: (typedData) =>
+            signTypedDataAsync(typedData as Parameters<typeof signTypedDataAsync>[0]),
         });
 
         res = await fetch("/api/agent/query", {

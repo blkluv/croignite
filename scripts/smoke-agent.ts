@@ -1,6 +1,7 @@
 import "dotenv/config";
 
 import { createClient } from "@crypto.com/ai-agent-client";
+import { Role } from "@crypto.com/ai-agent-client/dist/integrations/cdc-ai-agent.interfaces";
 import { z } from "zod";
 
 type QueryOptions = Parameters<typeof createClient>[0];
@@ -17,8 +18,8 @@ const EnvSchema = z.object({
 const env = EnvSchema.parse(process.env);
 
 const context: QueryContext[] = [
-  "App: CroIgnite (x402 sponsorships on Cronos testnet).",
-  "Network: Cronos EVM Testnet (chainId 338).",
+  { role: Role.System, content: "App: CroIgnite (x402 sponsorships on Cronos testnet)." },
+  { role: Role.System, content: "Network: Cronos EVM Testnet (chainId 338)." },
 ];
 
 const queryOptions: QueryOptions = {

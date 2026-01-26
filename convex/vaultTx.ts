@@ -47,7 +47,7 @@ async function resolveActivityMeta(
   ctx: { db: MutationCtx["db"] },
   args: { kind: VaultTxKind; creatorId?: string; postId?: string; txHash: string },
 ) {
-  let subtitle = activitySubtitle(args.kind);
+  const subtitle = activitySubtitle(args.kind);
 
   if (args.kind === "boostDeposit" && args.creatorId) {
     return { href: `/boost/${args.creatorId}`, subtitle };
