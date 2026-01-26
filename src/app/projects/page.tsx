@@ -87,7 +87,7 @@ function formatLocalDate(iso: string) {
 }
 
 function ProjectsPageContent() {
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const walletAddress = address ?? null;
   const ownerWallet = walletAddress ? walletAddress.toLowerCase() : undefined;
   const searchParams = useSearchParams();
@@ -477,18 +477,18 @@ function ProjectsPageContent() {
             <Card className="border-gray-200 dark:border-white/10">
               <CardHeader className="space-y-2">
                 <CardTitle>
-                  {authenticated || walletAddress
+                  {isConnected || walletAddress
                     ? "No projects yet"
                     : "Connect a wallet"}
                 </CardTitle>
                 <CardDescription>
-                  {authenticated || walletAddress
+                  {isConnected || walletAddress
                     ? "Create your first timeline to start editing."
                     : "Connect a wallet to create projects and sync them to the cloud."}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {authenticated || walletAddress ? (
+                {isConnected || walletAddress ? (
                   <Button type="button" onClick={() => setIsCreating(true)}>
                     <Plus className="h-4 w-4" />
                     New project
