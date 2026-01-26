@@ -273,18 +273,6 @@ export default function CommentsHeader({ post, params }: CommentsHeaderCompTypes
                     </span>
                 </Link>
 
-                <Link
-                    href={`/sponsor/${post?.id}?mode=x402`}
-                    className="pb-4 text-center flex items-center"
-                    aria-label="Sponsor via x402"
-                >
-                    <div className="rounded-full bg-gray-200 p-2 cursor-pointer text-gray-700 dark:bg-white/10 dark:text-white">
-                        <FaBullhorn size={22} />
-                    </div>
-                    <span className="text-xs pl-2 text-gray-800 font-semibold dark:text-white/80">
-                        x402
-                    </span>
-                </Link>
             </div>
         </>
     )

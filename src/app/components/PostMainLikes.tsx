@@ -231,18 +231,6 @@ export default function PostMainLikes({ post, className, avatarUrl, profileUrl }
                     </span>
                 </Link>
 
-                <Link
-                    href={`/sponsor/${post?.id}?mode=x402`}
-                    className="flex flex-col items-center gap-1 text-center"
-                    aria-label="Sponsor via x402"
-                >
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-200 text-gray-700 shadow-lg transition hover:bg-gray-300 dark:bg-black/50 dark:text-white dark:hover:bg-black/70">
-                        <FaBullhorn size="19"/>
-                    </div>
-                    <span className="text-[11px] font-semibold text-gray-700 dark:text-white/80">
-                        x402
-                    </span>
-                </Link>
             </div>
         </>
     )

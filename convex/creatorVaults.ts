@@ -174,11 +174,24 @@ export const provisionCreatorVault = action({
       return { vault: existing.vault, txHash: existing.txHash ?? null };
     }
 
+    const gasEstimate = await publicClient.estimateContractGas({
+      address: factoryAddress,
+      abi: factoryAbi,
+      functionName: "createVault",
+      args: [creatorWallet],
+      account: walletClient.account,
+    });
+
+    const gasFloor = 30000n;
+    const buffered = (gasEstimate * 12n) / 10n;
+    const gas = buffered > gasFloor ? buffered : gasFloor;
+
     const txHash = await walletClient.writeContract({
       address: factoryAddress,
       abi: factoryAbi,
       functionName: "createVault",
       args: [creatorWallet],
+      gas,
     });
 
     await publicClient.waitForTransactionReceipt({ hash: txHash });

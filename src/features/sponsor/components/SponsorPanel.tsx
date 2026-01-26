@@ -827,6 +827,13 @@ export default function SponsorPanel({
           ? "Confirmed"
           : "Not started";
 
+  const scrollToPanel = (id: string) => {
+    if (typeof document === "undefined") return;
+    const target = document.getElementById(id);
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="space-y-6">
       {isConnected && !isOnCronos && (
@@ -839,7 +846,7 @@ export default function SponsorPanel({
         </Alert>
       )}
 
-      <Card id="x402-panel">
+      <Card>
         <CardHeader>
           <CardTitle>Sponsor details</CardTitle>
           <CardDescription>
@@ -871,6 +878,23 @@ export default function SponsorPanel({
               {user ? formatShortHash(user) : "Not connected"}
             </span>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Choose settlement method</CardTitle>
+          <CardDescription>
+            You can sponsor on-chain (invoice receipt NFT) or use the gasless x402 flow.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-3">
+          <Button variant="outline" onClick={() => scrollToPanel("onchain-panel")}>
+            On-chain receipt
+          </Button>
+          <Button variant="outline" onClick={() => scrollToPanel("x402-panel")}>
+            x402 (gasless)
+          </Button>
         </CardContent>
       </Card>
 
@@ -970,7 +994,7 @@ export default function SponsorPanel({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card id="onchain-panel">
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
@@ -1144,7 +1168,7 @@ export default function SponsorPanel({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card id="x402-panel">
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>

@@ -16,7 +16,7 @@ One-liner: A creator-first short-video platform where sponsorships are tokenized
   7. **Action:** **Current page:** `/`, pause on the clip CTA area, confirm “Sponsor”, “Boost”, and “x402” actions are visible on the clip UI.
   8. **Verify on-screen:** **Current page:** `/`, confirm autoplay, creator handle, and “For You” selected are visible.
 - **Voiceover:**
-  > “We start on the homepage, connect a wallet from the header, then scroll the feed, like a clip, and confirm Sponsor/Boost/x402 actions are ready.”
+  > “We start on the homepage, connect a wallet from the header. The feed shows sponsor and boost actions ready for on-chain settlement.”
 
 ---
 
