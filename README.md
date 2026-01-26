@@ -12,6 +12,18 @@ Creator-first short-video platform where sponsorships are settled via x402 on Cr
 - **Demo runbook:** `docs/youtube-demo-script.md`
 - **Optional redirects:** `/demo-video` (set `DEMO_VIDEO_URL`) and `/pitch-deck` (set `PITCH_DECK_URL`)
 
+### Tracks We Joined + Why We Win
+
+**Track 1 — Main Track (x402 Applications)**
+- **Core x402 flow in production UI:** sponsorships can settle via HTTP 402 → signature → facilitator settle on Cronos.
+- **Pay‑per‑action model:** sponsor execution is metered at the API layer (x402) and logged on-chain.
+- **Agent‑ready design:** prompts and actions are structured so AI can plan, then users execute with deterministic settlement.
+
+**Track 3 — Crypto.com × Cronos Ecosystem Integrations**
+- **Cronos‑native settlement:** devUSDC.e payments and Cronos explorer links baked into the flows.
+- **Cronos x402 facilitator:** uses official payment requirements + verification + settlement path.
+- **Crypto.com AI Agent Copilot:** Ignite provides Cronos testnet insights and sponsorship planning.
+
 ### Project Links
 
 - **Demo video:** `/demo-video` (set `DEMO_VIDEO_URL`)
@@ -60,18 +72,21 @@ CroIgnite makes sponsorship a composable on-chain primitive:
 
 - **x402 paywall flow:** `/api/x402/sponsor` returns HTTP 402, verifies payment headers, and settles on Cronos.
 - **Pay-per-action:** sponsor calls become metered actions, ideal for agentic or automated flows.
+- **Judging edge:** shows a real, end‑to‑end x402 settlement inside the core sponsorship UX.
 
 ### Track 3 — Crypto.com × Cronos Ecosystem Integrations
 
 - **Cronos-native settlement:** devUSDC.e on Cronos EVM testnet with Cronos explorer links.
 - **Cronos facilitator integration:** standardized payment requirements + settlement via Cronos x402 infra.
 - **Crypto.com AI Agent Copilot:** `/ignite` queries Cronos testnet via the official AI Agent client.
+- **Judging edge:** combines Cronos infra + Crypto.com AI tooling in one cohesive product.
 
 ## Judging Criteria (How Judges Can Evaluate CroIgnite)
 
-- **Innovation:** x402 pay-per-request sponsorships + on-chain invoice receipts.
-- **Execution quality:** clean onboarding, full sponsor lifecycle, and observable activity feed.
-- **Ecosystem value:** Cronos testnet settlement, explorer-linked receipts, reusable vault primitives.
+- **Innovation:** x402 pay‑per‑request sponsorships + on‑chain invoice receipts + creator vault accounting.
+- **Agentic functionality:** AI copilot plans campaigns; execution uses deterministic x402 settlement.
+- **Execution quality:** end‑to‑end sponsor flow, receipt view, and explorer‑verifiable transactions.
+- **Ecosystem value:** Cronos devUSDC.e settlement, facilitator integration, and reusable vault primitives.
 
 ## Quick Judge Walkthrough (5 minutes)
 
