@@ -128,7 +128,7 @@ One-liner: A creator-first short-video platform where sponsorships are tokenized
   10. **Verify on-screen:** **Current page:** `/sponsor/[postId]`, confirm a success state shows “Invoice Receipt NFT minted” or a “View Receipt” button appears.
   11. **Action:** **Current page:** `/sponsor/[postId]`, click the Cronos explorer link on the success toast/receipt, confirm it opens to the transaction.
 - **Voiceover:**
-  > “Sponsorship creates a tokenized invoice receipt with on-chain terms.”
+  > “We open Sponsor, fill the campaign terms, set the devUSDC.e amount, approve the sponsor hub, and submit. The receipt view confirms the invoice and we open the Cronos tx to prove it settled.”
 
 ---
 
@@ -138,87 +138,51 @@ One-liner: A creator-first short-video platform where sponsorships are tokenized
 - **Steps:**
   1. **Current page:** `/sponsor/[postId]`, confirm the page is visible.
   2. **Navigate:** **Current page:** `/sponsor/[postId]`, click the “x402” CTA (or open `/sponsor/[postId]?mode=x402`) and confirm the x402 panel is in view.
-  3. **Action:** **Current page:** `/sponsor/[postId]`, click “Sponsor via x402”, confirm the signature request appears.
-  4. **Verify on-screen:** **Current page:** `/sponsor/[postId]`, confirm x402 status shows **confirmed** and a Cronos explorer tx link is visible.
-  5. **Action:** **Current page:** `/sponsor/[postId]`, click the explorer link to open the settled x402 transaction.
+  3. **Action:** **Current page:** `/sponsor/[postId]`, fill the same campaign terms used above.
+  4. **Enter values:**
+     - Sponsor name = `[SPONSOR_NAME=CroIgnite Launch Fund]`
+     - Objective = `[SPONSOR_OBJECTIVE=Launch week push for the remix challenge]`
+     - Deliverables (one per line)
+       - `1x 15s clip featuring the campaign`
+       - `1x caption + link in bio`
+       - `1x behind the scenes remix`
+     - Start date = `[SPONSOR_START_DATE=2026-01-12]`
+     - End date = `[SPONSOR_END_DATE=2026-01-19]`
+  5. **Action:** **Current page:** `/sponsor/[postId]`, in the x402 card, click the amount input and set `1` devUSDC.e.
+  6. **Action:** **Current page:** `/sponsor/[postId]`, click “Sponsor via x402”, confirm the signature request appears.
+  7. **Verify on-screen:** **Current page:** `/sponsor/[postId]`, confirm x402 status shows **confirmed** and a Cronos explorer tx link is visible.
+  8. **Action:** **Current page:** `/sponsor/[postId]`, click the explorer link to open the settled x402 transaction.
 - **Voiceover:**
-  > “x402 gives gasless settlement via the facilitator with a Cronos tx hash.”
+  > “Now we repeat the same sponsorship, but settle via x402. We sign the payment authorization, the facilitator settles on Cronos, and we open the tx hash for proof.”
 
 ---
 
-## 9. x402 Demo (Explicit HTTP 402 Proof)
-- **URL:** /x402-demo
-- **Shot:** x402 demo page with inputs for payTo + amount, request log, and a settled tx hash.
-- **Steps:**
-  1. **Current page:** `/sponsor/[postId]`, confirm receipt UI is visible.
-  2. **Navigate:** **Current page:** `/sponsor/[postId]`, click “Explore” → click “x402 Demo” → lands on `/x402-demo`, confirm heading “x402 Sponsor Demo” is visible.
-  3. **Action:** **Current page:** `/x402-demo`, enter a creator wallet as payTo and amount `1`.
-  4. **Action:** **Current page:** `/x402-demo`, click “Sponsor via x402”, confirm log shows “Payment Required” then “Payment settled”.
-  5. **Verify on-screen:** **Current page:** `/x402-demo`, confirm a Cronos explorer tx link appears.
-- **Voiceover:**
-  > “402 → sign → settle. That’s the x402 flow on Cronos Testnet.”
-
----
-
-## 10. Sponsor Remix Pack (x402 Paywall)
-- **URL:** /sponsor/[postId]
-- **Shot:** Sponsor perks card with “Download sponsor pack.”
-- **Steps:**
-  1. **Current page:** `/x402-demo`, confirm tx link is visible.
-  2. **Navigate:** **Current page:** `/x402-demo`, go back to `/sponsor/[postId]`, confirm the sponsor panel is visible.
-  3. **Action:** **Current page:** `/sponsor/[postId]`, click “Download sponsor pack”.
-  4. **Action:** **Current page:** `/sponsor/[postId]`, if not a booster, confirm a 402 payment is required, sign the request, then the JSON download starts.
-  5. **Verify on-screen:** **Current page:** `/sponsor/[postId]`, confirm “Sponsor pack downloaded.”
-- **Voiceover:**
-  > “Sponsor perks are paywalled with x402 if you’re not a booster.”
-
----
-
-## 11. Activity Feed (Auditable Ledger)
-- **URL:** /activity
-- **Shot:** Activity list with event rows (Boost deposit, Sponsorship invoice, Vault events) and Cronos explorer links.
-- **Steps:**
-  1. **Current page:** `/campaign/[campaignId]`, confirm the receipt is visible.
-  2. **Navigate:** **Current page:** `/campaign/[campaignId]`, click “Explore” → click “Activity feed” → lands on `/activity`, confirm “Activity” heading and rows appear.
-  3. **Action:** **Current page:** `/activity`, click “Next” in pagination, confirm rows update and page indicator changes.
-  4. **Action:** **Current page:** `/activity`, click “View on Cronos Explorer” on an invoice/sponsorship row, confirm explorer opens on the tx.
-  5. **Action:** **Current page:** `/activity`, click “Previous”, confirm you return to the prior page of events.
-  6. **Verify on-screen:** **Current page:** `/activity`, confirm event types include Sponsorship/Invoice and Boost/Vault actions.
-- **Voiceover:**
-  > “Everything is auditable with Cronos explorer links.”
-
----
-
-## 12. Projects + AI Editor + Export (Creator Workspace)
+## 9. Projects + AI Editor + Export (Creator Workspace)
 - **URL:** /projects
 - **Shot:** Projects list with a new project flow, then AI Studio generation, timeline edit, and export UI.
 - **Steps:**
-  1. **Current page:** `/settings`, confirm settings heading is visible.
+  1. **Current page:** `/settings`, confirm settings heading is visible (OpenAI key already saved).
   2. **Navigate:** **Current page:** `/settings`, click "Projects" in the sidebar/nav → lands on `/projects`, confirm project list heading appears.
   3. **Action:** **Current page:** `/projects`, click "New project", confirm the create dialog appears.
   4. **Enter values:**
      - Project name = `[PROJECT_NAME="Creator draft"]`
   5. **Action:** **Current page:** `/projects`, click "Create", confirm the new project row appears.
   6. **Action:** **Current page:** `/projects`, click "Open" on "Creator draft", confirm navigation to `/projects/[id]`.
-  7. **Action:** **Current page:** `/projects/[id]`, in the Library panel under "AI Studio", click "Generate", confirm redirect to `/settings` with the OpenAI key card visible.
-  8. **Enter values:** **Current page:** `/settings`
-     - OpenAI API key = `[OPENAI_API_KEY="sk-your-key"]`
-  9. **Action:** **Current page:** `/settings`, click "Save key", confirm success toast and return to `/projects/[id]`.
-  10. **Action:** **Current page:** `/projects/[id]`, open "AI Studio" → click "Generate" to open "Generate with Sora".
-  11. **Enter values:**
+  7. **Action:** **Current page:** `/projects/[id]`, open "AI Studio" → click "Generate" to open "Generate with Sora".
+  8. **Enter values:**
       - Prompt = `[SORA_PROMPT="A creator filming a short clip on a city rooftop at sunrise, cinematic, smooth handheld motion"]`
-  12. **Action:** **Current page:** `/projects/[id]`, click "Generate clip", confirm the job appears in "History" and the clip shows in the Library when ready.
-  13. **Action:** **Current page:** `/projects/[id]`, drag the generated clip onto the timeline, confirm the clip block appears.
-  14. **Action:** **Current page:** `/projects/[id]`, click "Text" in the left sidebar, set "Default text" to `[TITLE_TEXT="CroIgnite launch teaser"]`, click "Title", confirm the title appears on the canvas.
-  15. **Action:** **Current page:** `/projects/[id]`, click "Preview", confirm playback starts and playhead moves.
-  16. **Action:** **Current page:** `/projects/[id]`, click "Export" then "Start Export", wait for "Export complete" state.
-  17. **Verify on-screen:** **Current page:** `/projects/[id]`, confirm "Export complete" and "Download MP4" are visible.
+  9. **Action:** **Current page:** `/projects/[id]`, click "Generate clip", confirm the job appears in "History" and the clip shows in the Library when ready.
+  10. **Action:** **Current page:** `/projects/[id]`, drag the generated clip onto the timeline, confirm the clip block appears.
+  11. **Action:** **Current page:** `/projects/[id]`, click "Text" in the left sidebar, set "Default text" to `[TITLE_TEXT="CroIgnite launch teaser"]`, click "Title", confirm the title appears on the canvas.
+  12. **Action:** **Current page:** `/projects/[id]`, click "Preview", confirm playback starts and playhead moves.
+  13. **Action:** **Current page:** `/projects/[id]`, click "Export" then "Start Export", wait for "Export complete" state.
+  14. **Verify on-screen:** **Current page:** `/projects/[id]`, confirm "Export complete" and "Download MP4" are visible.
 - **Voiceover:**
-  > “Creators generate, edit, and export clips in one workflow.”
+  > “We create a new project, generate a Sora clip, drop it on the timeline, add a title, preview the edit, and export an MP4—everything happens inside the creator workspace.”
 
 ---
 
-## 13. Upload (Publish AI Edit to Feed)
+## 10. Upload (Publish AI Edit to Feed)
 - **URL:** /upload
 - **Shot:** Upload page with file picker, caption input, and Publish button; success redirect to feed.
 - **Steps:**
@@ -231,31 +195,4 @@ One-liner: A creator-first short-video platform where sponsorships are tokenized
   5. Click “Publish”, wait for “Uploaded” toast and redirect to `/`.
   6. **Verify on-screen:** **Current page:** `/`, confirm the new clip appears in the feed with the caption visible.
 - **Voiceover:**
-  > “Upload the export and publish it to the feed.”
-
----
-
-## Closing (Tracks + Impact)
-- **ON SCREEN:** quick montage: `/ignite` Pro mode, `/sponsor/[postId]?mode=x402`, `/x402-demo` 402→settled, `/campaign/[id]`, `/activity`.
-- **VOICEOVER:**
-  > “CROIgnite ships x402 payments and the Crypto.com AI Agent on Cronos Testnet.”
-- **Final line:**
-  > “That’s CROIgnite—creator-first video, sponsor receipts, and x402 settlement on Cronos.”
-
----
-
-## Optional “Judge-friendly” overlay captions (lower-thirds)
-- “Cronos Testnet · devUSDC.e + tCRO”
-- “x402: HTTP 402 → Sign → Settle”
-- “Invoice Receipt = tokenized sponsorship record”
-- “Ignite = Crypto.com AI Agent copilot”
-
----
-
-## Strong x402 proof moment (recommended)
-During `/x402-demo`, do a quick zoom on the response showing:
-- `status: 402`
-- `paymentRequirements.network = cronos-testnet`
-- `paymentRequirements.asset = devUSDC.e`
-
-Then show the successful second call + tx hash.
+  > “We upload the exported MP4, add a caption, publish, and the new clip appears in the feed ready for sponsorship and boosts.”

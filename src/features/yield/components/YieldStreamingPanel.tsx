@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   useAccount,
   useChainId,
+  usePublicClient,
   useReadContract,
   useWaitForTransactionReceipt,
   useWriteContract,
@@ -28,6 +29,7 @@ export default function YieldStreamingPanel({ vaultAddress }: YieldStreamingPane
   const { address } = useAccount();
   const chainId = useChainId();
   const { writeContractAsync } = useWriteContract();
+  const publicClient = usePublicClient();
 
   const [now, setNow] = useState(Date.now());
   const [syncHash, setSyncHash] = useState<`0x${string}` | null>(null);
@@ -127,7 +129,7 @@ export default function YieldStreamingPanel({ vaultAddress }: YieldStreamingPane
     ? new Date(Number(lastDripValue) * 1000).toLocaleString()
     : "—";
 
-  const canSync = Boolean(isOnCronos && writeContractAsync);
+  const canSync = Boolean(isOnCronos && writeContractAsync && bufferValue > 0n);
 
   const receipt = useWaitForTransactionReceipt({
     chainId: cronosTestnetContracts.chainId,
@@ -148,10 +150,27 @@ export default function YieldStreamingPanel({ vaultAddress }: YieldStreamingPane
     setSyncError(null);
     setIsSyncing(true);
     try {
+      let gas: bigint | undefined;
+      try {
+        gas = await publicClient?.estimateContractGas({
+          address: streamer,
+          abi: streamerAbi,
+          functionName: "drip",
+          account: address ?? undefined,
+        });
+        if (typeof gas === "bigint") {
+          const buffered = (gas * 13n) / 10n;
+          gas = buffered < 150_000n ? 150_000n : buffered;
+        }
+      } catch {
+        gas = 150_000n;
+      }
+
       const hash = await writeContractAsync({
         address: streamer,
         abi: streamerAbi,
         functionName: "drip",
+        gas,
       });
       setSyncHash(hash);
     } catch (error) {
