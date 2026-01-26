@@ -12,7 +12,7 @@ const buyerKey = process.env.X402_TEST_BUYER_PRIVATE_KEY;
 const sellerWallet = process.env.X402_SELLER_WALLET;
 const rpcUrl =
   process.env.CRONOS_TESTNET_RPC_URL ??
-  process.env.NEXT_PUBLIC_CRONOS_RPC_URL ??
+  process.env.NEXT_PUBLIC_CRONOS_TESTNET_RPC_URL ??
   "https://evm-t3.cronos.org";
 
 if (!buyerKey) {

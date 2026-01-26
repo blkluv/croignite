@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 
 const BodySchema = z.object({
   wallet: z.string().min(1),
+  provision: z.boolean().optional().default(true),
 });
 
 type ResolveResponse = {
@@ -59,7 +60,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const wallet = parsed.data.wallet;
+  const { wallet, provision } = parsed.data;
   if (!isAddress(wallet)) {
     return NextResponse.json(
       { ok: false, reason: "Invalid wallet address." } satisfies ResolveResponse,
@@ -72,6 +73,22 @@ export async function POST(req: Request) {
     chain: cronosTestnet,
     transport: http(resolveRpcUrl()),
   });
+
+  try {
+    await publicClient.getChainId();
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unable to reach the Cronos RPC endpoint.";
+    return NextResponse.json({
+      ok: true,
+      walletAddress,
+      vault: null,
+      txHash: null,
+      reason: message,
+    } satisfies ResolveResponse);
+  }
 
   const existing = await convexHttpClient.query(
     anyApi.creatorVaults.getByWallet,
@@ -87,6 +104,32 @@ export async function POST(req: Request) {
   const syncSecret = getServerEnv("CROIGNITE_INTERNAL_WRITE_SECRET");
   let onchainVault: string | null = null;
   let onchainReadFailed = false;
+
+  if (!factoryAddress) {
+    return NextResponse.json({
+      ok: true,
+      walletAddress,
+      vault: null,
+      txHash: existing?.txHash ?? null,
+      reason:
+        "Boost factory address is not configured. Run contracts:sync to publish Cronos testnet addresses.",
+    } satisfies ResolveResponse);
+  }
+
+  const factoryBytecode = await publicClient.getBytecode({
+    address: factoryAddress,
+  });
+
+  if (!factoryBytecode || factoryBytecode === "0x") {
+    return NextResponse.json({
+      ok: true,
+      walletAddress,
+      vault: null,
+      txHash: existing?.txHash ?? null,
+      reason:
+        "Boost factory contract not deployed on Cronos testnet. Run contracts:sync to update addresses.",
+    } satisfies ResolveResponse);
+  }
 
   if (factoryAddress) {
     try {
@@ -129,6 +172,16 @@ export async function POST(req: Request) {
     } satisfies ResolveResponse);
   }
 
+  if (!provision) {
+    return NextResponse.json({
+      ok: true,
+      walletAddress,
+      vault: null,
+      txHash: existing?.txHash ?? null,
+      reason: "Vault creation pending.",
+    } satisfies ResolveResponse);
+  }
+
   try {
     const provisioned = await convexHttpClient.action(
       anyApi.creatorVaults.provisionCreatorVault,
@@ -139,6 +192,7 @@ export async function POST(req: Request) {
           process.env.NODE_ENV === "development"
             ? getServerEnv("BOOST_VAULT_MANAGER_PRIVATE_KEY")
             : undefined,
+        forceRefresh: true,
       },
     );
 
@@ -147,16 +201,20 @@ export async function POST(req: Request) {
       walletAddress,
       vault: provisioned?.vault ?? null,
       txHash: provisioned?.txHash ?? null,
+      reason:
+        provisioned?.reason ??
+        (provisioned?.vault ? undefined : "Vault creation pending."),
     } satisfies ResolveResponse);
   } catch (error) {
     return NextResponse.json(
       {
-        ok: false,
+        ok: true,
         walletAddress,
+        vault: null,
+        txHash: null,
         reason:
           error instanceof Error ? error.message : "Unable to provision vault.",
       } satisfies ResolveResponse,
-      { status: 500 },
     );
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import MainLayout from "@/app/layouts/MainLayout";
@@ -22,8 +22,10 @@ import FlowLegend from "@/components/data-display/FlowLegend";
 import { formatShortHash } from "@/lib/utils";
 import SponsorPanel from "@/features/sponsor/components/SponsorPanel";
 import { isSponsorCampaignActive } from "@/features/sponsor/utils";
-import { formatUnits } from "viem";
+import { formatUnits, getAddress, isAddress } from "viem";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@/app/context/user";
+import { cronos } from "@/lib/web3/cronosConstants";
 
 type SponsorPageProps = {
   params: Promise<{ postId: string }>;
@@ -37,6 +39,16 @@ export default function SponsorPage({ params }: SponsorPageProps) {
   const [campaign, setCampaign] = useState<SponsorCampaign | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
+  const [isProvisioning, setIsProvisioning] = useState(false);
+  const [provisionMessage, setProvisionMessage] = useState<string | null>(null);
+  const [provisionTxHash, setProvisionTxHash] = useState<string | null>(null);
+  const provisionPollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoProvisionRef = useRef(false);
+  const userContext = useUser();
+  const explorerBase = useMemo(() => {
+    const base = cronos.testnet.explorerBaseUrl;
+    return base.endsWith("/") ? base.slice(0, -1) : base;
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -55,14 +67,16 @@ export default function SponsorPage({ params }: SponsorPageProps) {
         }
 
         const [vaultResult, campaignResult] = await Promise.all([
-          getCreatorVaultByWallet(postResult.user_id),
+          getCreatorVaultByWallet(postResult.user_id, { provision: false }),
           getSponsorCampaignByPostId(postId),
         ]);
 
         if (!isMounted) return;
 
         setPost(postResult);
-        setVaultRecord(vaultResult);
+        setVaultRecord(vaultResult.record);
+        setProvisionMessage(vaultResult.reason ?? null);
+        setProvisionTxHash(vaultResult.txHash ?? null);
         setCampaign(campaignResult);
         setStatus("ready");
       } catch (err) {
@@ -76,6 +90,17 @@ export default function SponsorPage({ params }: SponsorPageProps) {
       isMounted = false;
     };
   }, [postId]);
+
+  const connectedWallet =
+    userContext?.user?.id && isAddress(userContext.user.id)
+      ? getAddress(userContext.user.id)
+      : null;
+  const creatorWallet =
+    post?.profile?.user_id && isAddress(post.profile.user_id)
+      ? getAddress(post.profile.user_id)
+      : null;
+  const isCreatorConnected =
+    Boolean(connectedWallet && creatorWallet) && connectedWallet === creatorWallet;
 
   useEffect(() => {
     const focusX402 =
@@ -107,6 +132,129 @@ export default function SponsorPage({ params }: SponsorPageProps) {
       return campaign.protocolFeeWei;
     }
   }, [campaign]);
+
+  const stopProvisionPolling = () => {
+    if (provisionPollRef.current) {
+      clearTimeout(provisionPollRef.current);
+      provisionPollRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      stopProvisionPolling();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (status !== "ready") return;
+    if (!post?.profile?.user_id) return;
+    if (vaultRecord) return;
+    if (!isCreatorConnected) return;
+    if (isProvisioning) return;
+    if (autoProvisionRef.current) return;
+
+    autoProvisionRef.current = true;
+    void handleProvisionVault();
+  }, [status, post, vaultRecord, isCreatorConnected, isProvisioning]);
+
+  const pollProvisioning = async (attempt = 0) => {
+    if (!post?.user_id) return;
+
+    try {
+      const res = await fetch("/api/creator-vault/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wallet: post.user_id, provision: false }),
+      });
+
+      const payload = (await res.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            walletAddress?: string;
+            vault?: string | null;
+            txHash?: string | null;
+            reason?: string;
+          }
+        | null;
+
+      if (payload?.vault && payload.walletAddress) {
+        setVaultRecord({
+          wallet: payload.walletAddress,
+          vault: payload.vault,
+          txHash: payload.txHash ?? undefined,
+          createdAt: Date.now(),
+        });
+        setProvisionMessage("Creator vault is ready.");
+        stopProvisionPolling();
+        return;
+      }
+
+      if (attempt < 20) {
+        provisionPollRef.current = setTimeout(
+          () => void pollProvisioning(attempt + 1),
+          2000,
+        );
+      }
+    } catch {
+      // keep silent; manual retry remains available
+    }
+  };
+
+  const handleProvisionVault = async () => {
+    if (!post?.user_id) return;
+
+    setIsProvisioning(true);
+    setProvisionMessage(null);
+    setProvisionTxHash(null);
+    stopProvisionPolling();
+
+    try {
+      const res = await fetch("/api/creator-vault/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wallet: post.user_id, provision: true }),
+      });
+
+      const payload = (await res.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            walletAddress?: string;
+            vault?: string | null;
+            txHash?: string | null;
+            reason?: string;
+          }
+        | null;
+
+      if (!res.ok || !payload?.ok) {
+        throw new Error(payload?.reason ?? "Unable to provision vault.");
+      }
+
+      if (payload.vault && payload.walletAddress) {
+        setVaultRecord({
+          wallet: payload.walletAddress,
+          vault: payload.vault,
+          txHash: payload.txHash ?? undefined,
+          createdAt: Date.now(),
+        });
+        setProvisionMessage("Creator vault is ready.");
+        return;
+      }
+
+      if (payload?.txHash) {
+        setProvisionTxHash(payload.txHash);
+      }
+
+      setProvisionMessage(payload?.reason ?? "Vault is provisioning. Try again shortly.");
+      void pollProvisioning(0);
+    } catch (err) {
+      setProvisionMessage(
+        err instanceof Error ? err.message : "Vault provisioning failed.",
+      );
+    } finally {
+      setIsProvisioning(false);
+    }
+  };
 
   return (
     <MainLayout>
@@ -190,28 +338,61 @@ export default function SponsorPage({ params }: SponsorPageProps) {
                   <Alert variant="warning">
                     <AlertTitle>Creator vault not ready</AlertTitle>
                     <AlertDescription>
-                      This creator hasn&apos;t provisioned a boost vault yet. Ask them to
-                      connect their wallet on CroIgnite to enable sponsorships.
+                      This creator hasn&apos;t provisioned a boost vault yet.
                     </AlertDescription>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {connectedWallet
+                        ? isCreatorConnected
+                          ? "You are connected as the creator. We’ll provision the vault automatically."
+                          : `You are connected as ${formatShortHash(connectedWallet)}. Switch to the creator wallet ${formatShortHash(
+                              post.profile.user_id,
+                            )} to provision the vault.`
+                        : `Connect the creator wallet ${formatShortHash(
+                            post.profile.user_id,
+                          )} to provision the vault.`}
+                    </p>
                     <div className="mt-3 flex flex-wrap gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => void handleProvisionVault()}
+                        disabled={isProvisioning || !isCreatorConnected}
+                      >
+                        {isProvisioning ? "Provisioning..." : "Retry provisioning"}
+                      </Button>
                       <Button asChild variant="secondary" className="text-foreground">
                         <Link href={`/profile/${post.profile.user_id}`}>
                           Back to profile
                         </Link>
                       </Button>
                     </div>
+                    {provisionMessage && (
+                      <div className="mt-3 text-xs text-muted-foreground">
+                        {provisionMessage}
+                        {provisionTxHash && (
+                          <div className="mt-2 flex flex-col gap-1 font-mono">
+                            <span>Tx: {formatShortHash(provisionTxHash)}</span>
+                            <Link
+                              href={`${explorerBase}/tx/${provisionTxHash}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[color:var(--brand-primary)] underline underline-offset-2"
+                            >
+                              View on Cronos Explorer
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </Alert>
                 )}
 
-                {vaultRecord && (
-                  <SponsorPanel
-                    postId={post.id}
-                    creatorId={post.profile.user_id}
-                    vaultAddress={vaultRecord.vault as `0x${string}`}
-                    currentCampaign={campaign}
-                    onCampaignCreated={(nextCampaign) => setCampaign(nextCampaign)}
-                  />
-                )}
+                <SponsorPanel
+                  postId={post.id}
+                  creatorId={post.profile.user_id}
+                  vaultAddress={(vaultRecord?.vault as `0x${string}`) ?? null}
+                  currentCampaign={campaign}
+                  onCampaignCreated={(nextCampaign) => setCampaign(nextCampaign)}
+                />
               </div>
             </div>
           )}

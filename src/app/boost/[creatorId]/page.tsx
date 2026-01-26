@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { getAddress, isAddress } from "viem";
 import MainLayout from "@/app/layouts/MainLayout";
@@ -20,6 +20,7 @@ import FlowLegend from "@/components/data-display/FlowLegend";
 import { formatShortHash } from "@/lib/utils";
 import YieldPanel from "@/features/yield/components/YieldPanel";
 import { useUser } from "@/app/context/user";
+import { cronos } from "@/lib/web3/cronosConstants";
 
 type BoostPageProps = {
   params: Promise<{ creatorId: string }>;
@@ -32,6 +33,15 @@ export default function BoostPage({ params }: BoostPageProps) {
   const [vaultRecord, setVaultRecord] = useState<CreatorVaultRecord | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
+  const [isProvisioning, setIsProvisioning] = useState(false);
+  const [provisionMessage, setProvisionMessage] = useState<string | null>(null);
+  const [provisionTxHash, setProvisionTxHash] = useState<string | null>(null);
+  const provisionPollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoProvisionRef = useRef(false);
+  const explorerBase = useMemo(() => {
+    const base = cronos.testnet.explorerBaseUrl;
+    return base.endsWith("/") ? base.slice(0, -1) : base;
+  }, []);
 
   useEffect(() => {
     if (!creatorId || !isAddress(creatorId)) {
@@ -48,13 +58,15 @@ export default function BoostPage({ params }: BoostPageProps) {
       try {
         const [profileResult, vaultResult] = await Promise.all([
           getProfileByUserId(creatorId),
-          getCreatorVaultByWallet(creatorId),
+          getCreatorVaultByWallet(creatorId, { provision: false }),
         ]);
 
         if (!isMounted) return;
 
         setProfile(profileResult);
-        setVaultRecord(vaultResult);
+        setVaultRecord(vaultResult.record);
+        setProvisionMessage(vaultResult.reason ?? null);
+        setProvisionTxHash(vaultResult.txHash ?? null);
         setStatus("ready");
       } catch (err) {
         if (!isMounted) return;
@@ -76,6 +88,133 @@ export default function BoostPage({ params }: BoostPageProps) {
   const creatorWallet = isAddress(creatorId) ? getAddress(creatorId) : null;
   const isCreatorConnected =
     Boolean(connectedWallet && creatorWallet) && connectedWallet === creatorWallet;
+
+  const stopProvisionPolling = () => {
+    if (provisionPollRef.current) {
+      clearTimeout(provisionPollRef.current);
+      provisionPollRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      stopProvisionPolling();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (status !== "ready") return;
+    if (vaultRecord) return;
+    if (!isCreatorConnected) return;
+    if (isProvisioning) return;
+    if (autoProvisionRef.current) return;
+
+    autoProvisionRef.current = true;
+    void handleProvisionVault();
+  }, [status, vaultRecord, isCreatorConnected, isProvisioning]);
+
+  const pollProvisioning = async (attempt = 0) => {
+    if (!creatorWallet) return;
+
+    try {
+      const res = await fetch("/api/creator-vault/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wallet: creatorWallet, provision: false }),
+      });
+
+      const payload = (await res.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            walletAddress?: string;
+            vault?: string | null;
+            txHash?: string | null;
+            reason?: string;
+          }
+        | null;
+
+      if (payload?.vault && payload.walletAddress) {
+        setVaultRecord({
+          wallet: payload.walletAddress,
+          vault: payload.vault,
+          txHash: payload.txHash ?? undefined,
+          createdAt: Date.now(),
+        });
+        setProvisionMessage("Vault is ready.");
+        setProvisionTxHash(payload.txHash ?? null);
+        stopProvisionPolling();
+        return;
+      }
+
+      if (payload?.txHash) {
+        setProvisionTxHash(payload.txHash);
+      }
+
+      if (attempt < 20) {
+        provisionPollRef.current = setTimeout(
+          () => void pollProvisioning(attempt + 1),
+          2000,
+        );
+      }
+    } catch {
+      // keep silent; manual retry remains available
+    }
+  };
+
+  const handleProvisionVault = async () => {
+    if (!creatorWallet) return;
+
+    setIsProvisioning(true);
+    setProvisionMessage(null);
+    stopProvisionPolling();
+
+    try {
+      const res = await fetch("/api/creator-vault/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wallet: creatorWallet, provision: true }),
+      });
+
+      const payload = (await res.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            walletAddress?: string;
+            vault?: string | null;
+            txHash?: string | null;
+            reason?: string;
+          }
+        | null;
+
+      if (!res.ok || !payload?.ok) {
+        throw new Error(payload?.reason ?? "Unable to provision vault.");
+      }
+
+      if (payload.vault && payload.walletAddress) {
+        setVaultRecord({
+          wallet: payload.walletAddress,
+          vault: payload.vault,
+          txHash: payload.txHash ?? undefined,
+          createdAt: Date.now(),
+        });
+        setProvisionMessage("Vault is ready.");
+        setProvisionTxHash(payload.txHash ?? null);
+        return;
+      }
+
+      if (payload?.txHash) {
+        setProvisionTxHash(payload.txHash);
+      }
+
+      setProvisionMessage(payload?.reason ?? "Vault is provisioning. Try again shortly.");
+      void pollProvisioning(0);
+    } catch (err) {
+      setProvisionMessage(
+        err instanceof Error ? err.message : "Vault provisioning failed.",
+      );
+    } finally {
+      setIsProvisioning(false);
+    }
+  };
 
   return (
     <MainLayout>
@@ -118,7 +257,7 @@ export default function BoostPage({ params }: BoostPageProps) {
                 <p className="text-xs text-muted-foreground">
                   {connectedWallet
                     ? isCreatorConnected
-                      ? "You are connected as the creator. Open the boost flow to provision the vault."
+                      ? "You are connected as the creator. We’ll provision the vault automatically."
                       : `You are connected as ${formatShortHash(connectedWallet)}. Switch to the creator wallet ${formatShortHash(
                           creatorId,
                         )} to provision the vault.`
@@ -129,6 +268,13 @@ export default function BoostPage({ params }: BoostPageProps) {
               </AlertDescription>
               <div className="mt-3 flex flex-wrap gap-3">
                 <Button
+                  variant="outline"
+                  onClick={() => void handleProvisionVault()}
+                  disabled={isProvisioning || !isCreatorConnected}
+                >
+                  {isProvisioning ? "Provisioning..." : "Provision vault"}
+                </Button>
+                <Button
                   asChild
                   variant="secondary"
                   className="text-foreground"
@@ -136,6 +282,24 @@ export default function BoostPage({ params }: BoostPageProps) {
                   <Link href={`/profile/${creatorId}`}>Back to profile</Link>
                 </Button>
               </div>
+              {provisionMessage && (
+                <div className="mt-3 text-xs text-muted-foreground">
+                  {provisionMessage}
+                  {provisionTxHash && (
+                    <div className="mt-2 flex flex-col gap-1 font-mono">
+                      <span>Tx: {formatShortHash(provisionTxHash)}</span>
+                      <Link
+                        href={`${explorerBase}/tx/${provisionTxHash}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[color:var(--brand-primary)] underline underline-offset-2"
+                      >
+                        View on Cronos Explorer
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
             </Alert>
           )}
 

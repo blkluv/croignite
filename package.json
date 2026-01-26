@@ -21,6 +21,7 @@
     "build:contracts": "pnpm --filter blockchain-hardhat run compile",
     "contracts:sync": "tsx scripts/sync-contracts.ts",
     "smoke:x402": "tsx scripts/smoke-x402.ts",
+    "grant:vault-admin": "tsx scripts/grant-vault-admin.ts",
     "smoke:agent": "tsx scripts/smoke-agent.ts"
   },
   "dependencies": {

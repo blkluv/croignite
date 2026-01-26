@@ -23,6 +23,7 @@ import {
   keccak256,
   parseUnits,
   toHex,
+  zeroAddress,
 } from "viem";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -65,7 +66,7 @@ type TxState = {
 type SponsorPanelProps = {
   postId: string;
   creatorId: string;
-  vaultAddress: Address;
+  vaultAddress?: Address | null;
   currentCampaign: SponsorCampaign | null;
   onCampaignCreated?: (campaign: SponsorCampaign) => void;
 };
@@ -130,7 +131,11 @@ export default function SponsorPanel({
   const yieldVault = getAddress(
     cronosTestnetContracts.croigniteVault as Address,
   );
-  const vault = useMemo(() => getAddress(vaultAddress), [vaultAddress]);
+  const vault = useMemo(() => {
+    if (!vaultAddress || !isAddress(vaultAddress)) return null;
+    return getAddress(vaultAddress);
+  }, [vaultAddress]);
+  const hasVault = Boolean(vault);
 
   const postIdHash = useMemo(() => {
     return keccak256(toHex(`post:${postId}`));
@@ -199,25 +204,25 @@ export default function SponsorPanel({
   });
 
   const { data: vaultSymbol } = useReadContract({
-    address: vault,
+    address: (vault ?? zeroAddress) as Address,
     abi: erc20Abi,
     functionName: "symbol",
-    query: { enabled: isOnCronos },
+    query: { enabled: Boolean(vault) && isOnCronos },
   });
 
   const { data: vaultDecimals } = useReadContract({
-    address: vault,
+    address: (vault ?? zeroAddress) as Address,
     abi: erc20Abi,
     functionName: "decimals",
-    query: { enabled: isOnCronos },
+    query: { enabled: Boolean(vault) && isOnCronos },
   });
 
   const { data: shareBalance, refetch: refetchShareBalance } = useReadContract({
-    address: vault,
+    address: (vault ?? zeroAddress) as Address,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: user ? [user] : undefined,
-    query: { enabled: Boolean(user) && isOnCronos },
+    query: { enabled: Boolean(user) && Boolean(vault) && isOnCronos },
   });
 
   const { data: nativeBalance, refetch: refetchNativeBalance } = useBalance({
@@ -448,6 +453,11 @@ export default function SponsorPanel({
 
     if (!isAddress(creatorId)) {
       setActionError("Creator wallet is invalid.");
+      return;
+    }
+
+    if (!vault) {
+      setActionError("Creator vault is still provisioning. Try again shortly.");
       return;
     }
 
@@ -856,7 +866,9 @@ export default function SponsorPanel({
         <CardContent className="space-y-3 text-sm">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Vault</span>
-            <span className="font-mono text-xs">{formatShortHash(vault)}</span>
+            <span className="font-mono text-xs">
+              {vault ? formatShortHash(vault) : "Pending"}
+            </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Yield vault</span>
@@ -1007,6 +1019,16 @@ export default function SponsorPanel({
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {!hasVault && (
+            <Alert variant="warning">
+              <AlertTitle>Creator vault provisioning</AlertTitle>
+              <AlertDescription>
+                The creator vault is still being created. You can use the x402
+                sponsor flow now, or retry the on-chain receipt flow once the
+                vault is ready.
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="space-y-4">
             <div className="space-y-3">
               <label className="text-sm font-medium" htmlFor="amount">
@@ -1054,7 +1076,9 @@ export default function SponsorPanel({
             <Button
               variant="outline"
               onClick={() => void handleApprove()}
-              disabled={!canTransact || pendingAction !== null || !needsApproval}
+              disabled={
+                !canTransact || pendingAction !== null || !needsApproval || !hasVault
+              }
             >
               {pendingAction === "approve" ? "Approving..." : "Approve sponsor hub"}
             </Button>
@@ -1065,7 +1089,8 @@ export default function SponsorPanel({
                 !canTransact ||
                 pendingAction !== null ||
                 needsApproval ||
-                !termsReady
+                !termsReady ||
+                !hasVault
               }
             >
               {pendingAction === "sponsor" ? "Sponsoring..." : "Sponsor clip"}
@@ -1188,6 +1213,10 @@ export default function SponsorPanel({
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Terms ready</span>
             <span>{termsReady ? "Yes" : "No"}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Creator vault</span>
+            <span>{hasVault ? "Ready" : "Provisioning"}</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">

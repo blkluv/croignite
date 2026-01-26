@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { RateLimiterMemory } from "rate-limiter-flexible";
+import { createPublicClient, http } from "viem";
+import { cronosTestnet } from "@/lib/web3/cronos";
 import {
   AiAgentRequestError,
   queryCdcAiAgent,
@@ -46,31 +48,22 @@ const WALLET_ACTIVITY_KEYWORDS = [
   "tx list",
   "token transfers",
 ];
-const CRONOS_EXPLORER_API_BASE =
-  process.env.CRONOS_EXPLORER_API_BASE ??
-  process.env.NEXT_PUBLIC_CRONOS_EXPLORER_API_BASE ??
-  "https://cronos.org/explorer/testnet3/api";
+const CRONOS_TESTNET_EXPLORER_API_BASE =
+  process.env.CRONOS_TESTNET_EXPLORER_API_BASE ??
+  "https://explorer-api.cronos.org/testnet/api/v1";
+const CRONOS_TESTNET_EXPLORER_API_KEY =
+  process.env.CRONOS_TESTNET_EXPLORER_API_KEY ?? "";
 const CRONOS_EXPLORER_BASE =
   process.env.NEXT_PUBLIC_CRONOS_EXPLORER_BASE ??
   "https://explorer.cronos.org/testnet";
-const USDCE_ADDRESS =
-  process.env.NEXT_PUBLIC_CRONOS_USDCE_ADDRESS ??
-  "0xc01efAaF7C5C61bEbFAeb358E1161b537b8bC0e0";
+const CRONOS_TESTNET_RPC_URL =
+  process.env.CRONOS_TESTNET_RPC_URL ??
+  process.env.NEXT_PUBLIC_CRONOS_TESTNET_RPC_URL ??
+  "https://evm-t3.cronos.org";
 
 function isInvalidAddressMessage(message: string) {
   return /invalid address format/i.test(message);
 }
-
-type BlockscoutTx = {
-  hash: string;
-  from: string;
-  to: string;
-  value: string;
-  timeStamp: string;
-  contractAddress?: string;
-  tokenSymbol?: string;
-  tokenDecimal?: string;
-};
 
 function isWalletActivityQuery(prompt: string) {
   const lowered = prompt.toLowerCase();
@@ -85,36 +78,24 @@ function formatUnits(value: bigint, decimals: number) {
   return `${whole.toString()}.${fractionStr}`;
 }
 
-async function fetchBlockscoutTxs(
-  address: string,
-  action: "txlist" | "tokentx",
-  limit = 10,
-): Promise<BlockscoutTx[] | null> {
-  const params = new URLSearchParams({
-    module: "account",
-    action,
-    address,
-    page: "1",
-    offset: String(limit),
-    sort: "desc",
-  });
+async function fetchExplorerBlockNumber(): Promise<bigint | null> {
+  if (!CRONOS_TESTNET_EXPLORER_API_KEY) return null;
+  const endpoint = `${CRONOS_TESTNET_EXPLORER_API_BASE}/ethproxy/getBlockNumber?apikey=${CRONOS_TESTNET_EXPLORER_API_KEY}`;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 6000);
+  const timeout = setTimeout(() => controller.abort(), 4000);
   try {
-    const res = await fetch(`${CRONOS_EXPLORER_API_BASE}?${params.toString()}`, {
-      cache: "no-store",
-      signal: controller.signal,
-    });
+    const res = await fetch(endpoint, { cache: "no-store", signal: controller.signal });
     if (!res.ok) return null;
-    const json = (await res.json()) as {
-      status?: string;
-      message?: string;
-      result?: BlockscoutTx[] | string;
-    };
-    if (json?.status !== "1" || !Array.isArray(json.result)) {
-      return [];
+    const json = (await res.json()) as { result?: string | number };
+    if (typeof json?.result === "string") {
+      return json.result.startsWith("0x")
+        ? BigInt(json.result)
+        : BigInt(Number.parseInt(json.result, 10));
     }
-    return json.result;
+    if (typeof json?.result === "number") {
+      return BigInt(json.result);
+    }
+    return null;
   } catch {
     return null;
   } finally {
@@ -123,52 +104,40 @@ async function fetchBlockscoutTxs(
 }
 
 async function buildWalletActivitySummary(address: string) {
-  const [nativeTxs, tokenTxs] = await Promise.all([
-    fetchBlockscoutTxs(address, "txlist", 8),
-    fetchBlockscoutTxs(address, "tokentx", 8),
-  ]);
+  const publicClient = createPublicClient({
+    chain: cronosTestnet,
+    transport: http(CRONOS_TESTNET_RPC_URL),
+  });
 
-  if (!nativeTxs || !tokenTxs) {
+  try {
+    const [balance, txCount, blockNumberFromExplorer] = await Promise.all([
+      publicClient.getBalance({ address: address as `0x${string}` }),
+      publicClient.getTransactionCount({ address: address as `0x${string}` }),
+      fetchExplorerBlockNumber(),
+    ]);
+
+    const fallbackBlockNumber =
+      blockNumberFromExplorer ?? (await publicClient.getBlockNumber());
+
+    const explorerBase = CRONOS_EXPLORER_BASE.replace(/\/$/, "");
+    const explorerLink = `${explorerBase}/address/${address}`;
+
+    const summary = [
+      `Here’s a quick summary for ${address} on Cronos testnet:`,
+      `• tCRO balance: ${formatUnits(balance, 18)} tCRO`,
+      `• Transaction count (nonce): ${txCount}`,
+      `• Latest block: ${fallbackBlockNumber.toString()}`,
+      `• Explorer: ${explorerLink}`,
+    ].join("\n");
+
+    return { ok: true, message: summary };
+  } catch {
     return {
       ok: false,
       message:
-        "The Cronos explorer API is not responding right now. Please try again in a moment.",
+        "Unable to fetch wallet data from Cronos right now. Please try again in a moment.",
     };
   }
-
-  const latestNative = nativeTxs[0];
-  const latestToken = tokenTxs[0];
-  const usdceAddress = USDCE_ADDRESS.toLowerCase();
-  const usdceTxs = tokenTxs.filter(
-    (tx) => (tx.contractAddress ?? "").toLowerCase() === usdceAddress,
-  );
-  const usdceTotal = usdceTxs.reduce((sum, tx) => {
-    try {
-      return sum + BigInt(tx.value ?? "0");
-    } catch {
-      return sum;
-    }
-  }, 0n);
-  const usdceHuman = usdceTotal > 0n ? formatUnits(usdceTotal, 6) : "0";
-  const explorerBase = CRONOS_EXPLORER_BASE.replace(/\/$/, "");
-  const explorerLink = latestNative?.hash
-    ? `${explorerBase}/tx/${latestNative.hash}`
-    : `${explorerBase}/address/${address}`;
-
-  const summary = [
-    `Here’s a quick summary for ${address} on Cronos testnet:`,
-    `• Recent native transactions: ${nativeTxs.length}`,
-    `• Recent token transfers: ${tokenTxs.length} (${usdceTxs.length} devUSDC.e)`,
-    `• devUSDC.e moved in last ${usdceTxs.length} txs: ${usdceHuman} devUSDC.e`,
-    latestNative
-      ? `• Latest native tx: ${latestNative.hash} → ${explorerLink}`
-      : `• Explorer: ${explorerLink}`,
-    latestToken ? `• Latest token tx: ${latestToken.hash}` : null,
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  return { ok: true, message: summary };
 }
 
 function getClientIp(req: Request) {

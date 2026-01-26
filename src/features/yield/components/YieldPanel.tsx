@@ -86,6 +86,7 @@ export default function YieldPanel({
 
   const user = address as Address | undefined;
   const isOnCronos = chainId === cronosTestnetContracts.chainId;
+  const isVerified = true;
 
   const usdce = getAddress(cronosTestnetContracts.usdce as Address);
   const vault = getAddress(

@@ -6,8 +6,9 @@ import {
   internalQuery,
 } from "./_generated/server";
 import { v } from "convex/values";
-import { getAddress, isAddress, zeroAddress } from "viem";
+import { getAddress, isAddress, keccak256, toHex, zeroAddress } from "viem";
 import { createCronosClients } from "./cronos";
+import { cronosTestnet } from "viem/chains";
 import { getEnv, requireEnv } from "./env";
 import { anyApi } from "convex/server";
 
@@ -25,6 +26,16 @@ const factoryAbi = [
     stateMutability: "nonpayable",
     inputs: [{ name: "creator", type: "address" }],
     outputs: [{ name: "vaultAddr", type: "address" }],
+  },
+  {
+    type: "function",
+    name: "hasRole",
+    stateMutability: "view",
+    inputs: [
+      { name: "role", type: "bytes32" },
+      { name: "account", type: "address" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
   },
 ] as const;
 
@@ -151,6 +162,36 @@ export const provisionCreatorVault = action({
     const privateKey =
       args.managerPrivateKey ?? requireEnv("BOOST_VAULT_MANAGER_PRIVATE_KEY");
     const { publicClient, walletClient } = createCronosClients(privateKey);
+
+    const chainId = await publicClient.getChainId();
+    if (chainId !== cronosTestnet.id) {
+      throw new Error(
+        `Cronos RPC chainId mismatch. Expected ${cronosTestnet.id}, got ${chainId}.`,
+      );
+    }
+
+    const factoryCode = await publicClient.getBytecode({
+      address: factoryAddress,
+    });
+    if (!factoryCode || factoryCode === "0x") {
+      throw new Error(
+        `Boost factory contract not deployed at ${factoryAddress}.`,
+      );
+    }
+
+    const vaultAdminRole = keccak256(toHex("VAULT_ADMIN_ROLE"));
+    const hasRole = (await publicClient.readContract({
+      address: factoryAddress,
+      abi: factoryAbi,
+      functionName: "hasRole",
+      args: [vaultAdminRole, walletClient.account.address],
+    })) as boolean;
+
+    if (!hasRole) {
+      throw new Error(
+        "Vault manager wallet lacks the required role on the factory contract. Grant VAULT_ADMIN_ROLE to the manager address.",
+      );
+    }
     const syncSecret = getEnv("CROIGNITE_INTERNAL_WRITE_SECRET");
 
     const onchainVault = (await publicClient.readContract({
@@ -174,37 +215,105 @@ export const provisionCreatorVault = action({
       return { vault: existing.vault, txHash: existing.txHash ?? null };
     }
 
-    const gasEstimate = await publicClient.estimateContractGas({
-      address: factoryAddress,
-      abi: factoryAbi,
-      functionName: "createVault",
-      args: [creatorWallet],
-      account: walletClient.account,
-    });
+    let gasEstimate: bigint;
+    try {
+      gasEstimate = await publicClient.estimateContractGas({
+        address: factoryAddress,
+        abi: factoryAbi,
+        functionName: "createVault",
+        args: [creatorWallet],
+        account: walletClient.account,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error.";
+      throw new Error(`Vault creation gas estimate failed: ${message}`);
+    }
 
-    const gasFloor = 30000n;
-    const buffered = (gasEstimate * 12n) / 10n;
+    try {
+      await publicClient.simulateContract({
+        address: factoryAddress,
+        abi: factoryAbi,
+        functionName: "createVault",
+        args: [creatorWallet],
+        account: walletClient.account,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error.";
+      throw new Error(`Vault creation simulation failed: ${message}`);
+    }
+
+    const gasFloor = 2_000_000n;
+    const buffered = (gasEstimate * 15n) / 10n;
     const gas = buffered > gasFloor ? buffered : gasFloor;
 
-    const txHash = await walletClient.writeContract({
-      address: factoryAddress,
-      abi: factoryAbi,
-      functionName: "createVault",
-      args: [creatorWallet],
-      gas,
-    });
+    let txHash: `0x${string}` | null = null;
+    try {
+      txHash = await walletClient.writeContract({
+        address: factoryAddress,
+        abi: factoryAbi,
+        functionName: "createVault",
+        args: [creatorWallet],
+        gas,
+      });
 
-    await publicClient.waitForTransactionReceipt({ hash: txHash });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+      if (receipt.status === "reverted") {
+        throw new Error("Vault creation transaction reverted.");
+      }
+    } catch (error) {
+      const fallbackVault = (await publicClient.readContract({
+        address: factoryAddress,
+        abi: factoryAbi,
+        functionName: "vaultOf",
+        args: [creatorWallet],
+      })) as `0x${string}`;
 
-    const vault = (await publicClient.readContract({
-      address: factoryAddress,
-      abi: factoryAbi,
-      functionName: "vaultOf",
-      args: [creatorWallet],
-    })) as `0x${string}`;
+      if (fallbackVault && fallbackVault !== zeroAddress) {
+        await ctx.runMutation(anyApi.creatorVaults.upsertVaultFromServer, {
+          wallet: creatorWallet,
+          vault: fallbackVault,
+          txHash: txHash ?? existing?.txHash ?? null,
+          secret: syncSecret,
+        });
+        return { vault: fallbackVault, txHash: txHash ?? existing?.txHash ?? null };
+      }
 
-    if (!vault || vault === zeroAddress) {
-      throw new Error("Vault creation did not return a valid address.");
+      const rawMessage = error instanceof Error ? error.message : "Unknown error.";
+      const lowered = rawMessage.toLowerCase();
+      let reason = "Vault creation reverted. Please try again in a moment.";
+      if (lowered.includes("accesscontrol") || lowered.includes("caller is not")) {
+        reason =
+          "Vault manager wallet lacks the required role on the factory contract.";
+      } else if (lowered.includes("already") && lowered.includes("exist")) {
+        reason = "Vault already exists but has not synced yet. Retry provisioning.";
+      } else if (lowered.includes("transaction reverted")) {
+        reason = "Vault creation transaction reverted. Check factory role + gas.";
+      }
+      return { vault: null, txHash: txHash ?? existing?.txHash ?? null, reason };
+    }
+
+    const sleep = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+
+    let vault: `0x${string}` | null = null;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const candidate = (await publicClient.readContract({
+        address: factoryAddress,
+        abi: factoryAbi,
+        functionName: "vaultOf",
+        args: [creatorWallet],
+      })) as `0x${string}`;
+
+      if (candidate && candidate !== zeroAddress) {
+        vault = candidate;
+        break;
+      }
+
+      await sleep(800 + attempt * 250);
+    }
+
+    if (!vault) {
+      return { vault: null, txHash, reason: "Vault creation pending on-chain." };
     }
 
     await ctx.runMutation(anyApi.creatorVaults.upsertVaultFromServer, {

@@ -15,7 +15,7 @@ const EnvSchema = z.object({
   CRONOS_CHAIN_ID: z.coerce.number().optional(),
   NEXT_PUBLIC_CRONOS_CHAIN_ID: z.coerce.number().optional(),
   CRONOS_TESTNET_RPC_URL: z.string().url().optional(),
-  NEXT_PUBLIC_CRONOS_RPC_URL: z.string().url().optional(),
+  NEXT_PUBLIC_CRONOS_TESTNET_RPC_URL: z.string().url().optional(),
   CRONOS_MAINNET_EXPLORER_API_KEY: z.string().optional(),
   CRONOS_ZKEVM_EXPLORER_API_KEY: z.string().optional(),
   CRONOS_ZKEVM_TESTNET_EXPLORER_API_KEY: z.string().optional(),
@@ -151,7 +151,8 @@ async function postAiAgentRequest(
 
 export function getCdcAiAgentOptions(context: QueryContext[] = []) {
   const chainId = env.CRONOS_CHAIN_ID ?? env.NEXT_PUBLIC_CRONOS_CHAIN_ID ?? 338;
-  const customRPC = env.CRONOS_TESTNET_RPC_URL ?? env.NEXT_PUBLIC_CRONOS_RPC_URL;
+  const customRPC =
+    env.CRONOS_TESTNET_RPC_URL ?? env.NEXT_PUBLIC_CRONOS_TESTNET_RPC_URL;
   const queryOptions: QueryOptions = {
     openAI: {
       apiKey: env.OPENAI_API_KEY,

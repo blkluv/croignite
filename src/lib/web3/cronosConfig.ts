@@ -5,7 +5,7 @@ const network = cronos.testnet;
 const explorerBase = (
   process.env.NEXT_PUBLIC_CRONOS_EXPLORER_BASE ?? network.explorerBaseUrl
 ).replace(/\/$/, "");
-const rpcUrl = process.env.NEXT_PUBLIC_CRONOS_RPC_URL ?? network.rpcUrl;
+const rpcUrl = process.env.NEXT_PUBLIC_CRONOS_TESTNET_RPC_URL ?? network.rpcUrl;
 const faucetUrl = process.env.NEXT_PUBLIC_CRONOS_FAUCET_URL ?? network.faucetUrl;
 const usdceFaucetUrl =
   process.env.NEXT_PUBLIC_CRONOS_USDCE_FAUCET_URL ?? network.usdceFaucetUrl;

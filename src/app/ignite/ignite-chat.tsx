@@ -39,7 +39,7 @@ const systemContext: ContextItem = {
 const suggestionPrompts = [
   "What is the latest block on Cronos testnet?",
   "How many devUSDC.e sponsorships can I do with 25 devUSDC.e if each is 0.5?",
-  "Summarize wallet activity for 0x... on Cronos testnet.",
+  "Explain the x402 flow in one sentence.",
   "Give me a 3-step plan to sponsor DeFi creators this week.",
 ];
 

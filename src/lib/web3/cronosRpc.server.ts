@@ -27,7 +27,7 @@ export async function cronosRpc<T>(
 ): Promise<T> {
   const rpcUrl =
     getServerEnv("CRONOS_TESTNET_RPC_URL") ??
-    process.env.NEXT_PUBLIC_CRONOS_RPC_URL ??
+    process.env.NEXT_PUBLIC_CRONOS_TESTNET_RPC_URL ??
     cronos.testnet.rpcUrl;
 
   if (!rpcUrl) {

@@ -161,7 +161,7 @@ Environment requirements:
 
 - **x402 smoke test:** `X402_TEST_BUYER_PRIVATE_KEY`, `X402_SELLER_WALLET` (funded with devUSDC.e)
 - **AI agent smoke test:** `OPENAI_API_KEY`, `CRONOS_TESTNET_EXPLORER_API_KEY`
-- **Optional:** `NEXT_PUBLIC_CRONOS_RPC_URL` (defaults to `https://evm-t3.cronos.org`)
+- **Optional:** `NEXT_PUBLIC_CRONOS_TESTNET_RPC_URL` (defaults to `https://evm-t3.cronos.org`)
 
 Facilitator readiness check (official endpoints):
 

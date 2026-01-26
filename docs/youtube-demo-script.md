@@ -13,10 +13,10 @@ One-liner: A creator-first short-video platform where sponsorships are tokenized
   4. **Action:** **Current page:** `/`, connect a wallet and confirm the address is shown in the header.
   5. **Action:** **Current page:** `/`, scroll one clip down, confirm the next clip autoplays and the creator handle changes.
   6. **Action:** **Current page:** `/`, click “❤ Like” on the right rail, confirm the icon toggles and the count increments.
-  7. **Action:** **Current page:** `/`, pause on the clip CTA area, confirm “Sponsor”, “Boost”, and “x402” actions are visible on the clip UI.
+  7. **Action:** **Current page:** `/`, pause on the clip CTA area, confirm “Sponsor” and “Boost” actions are visible on the clip UI.
   8. **Verify on-screen:** **Current page:** `/`, confirm autoplay, creator handle, and “For You” selected are visible.
 - **Voiceover:**
-  > “We start on the homepage, connect a wallet from the header. The feed shows sponsor and boost actions ready for on-chain settlement.”
+  > “We start on the homepage, connect a wallet from the header, and make sure we have enough tCRO and devUSDC.e to cover the transactions we’ll run. The feed shows sponsor and boost actions ready for on-chain settlement.”
 
 ---
 
@@ -126,6 +126,7 @@ One-liner: A creator-first short-video platform where sponsorships are tokenized
   8. **Action:** **Current page:** `/sponsor/[postId]`, click “Approve sponsor hub” if shown, wait for “Approved” state.
   9. **Action:** **Current page:** `/sponsor/[postId]`, click “Sponsor clip”, wait for wallet prompt and “Transaction submitted” state.
   10. **Verify on-screen:** **Current page:** `/sponsor/[postId]`, confirm a success state shows “Invoice Receipt NFT minted” or a “View Receipt” button appears.
+  11. **Action:** **Current page:** `/sponsor/[postId]`, click the Cronos explorer link on the success toast/receipt, confirm it opens to the transaction.
 - **Voiceover:**
   > “Sponsorship creates a tokenized invoice receipt with on-chain terms.”
 
@@ -139,6 +140,7 @@ One-liner: A creator-first short-video platform where sponsorships are tokenized
   2. **Navigate:** **Current page:** `/sponsor/[postId]`, click the “x402” CTA (or open `/sponsor/[postId]?mode=x402`) and confirm the x402 panel is in view.
   3. **Action:** **Current page:** `/sponsor/[postId]`, click “Sponsor via x402”, confirm the signature request appears.
   4. **Verify on-screen:** **Current page:** `/sponsor/[postId]`, confirm x402 status shows **confirmed** and a Cronos explorer tx link is visible.
+  5. **Action:** **Current page:** `/sponsor/[postId]`, click the explorer link to open the settled x402 transaction.
 - **Voiceover:**
   > “x402 gives gasless settlement via the facilitator with a Cronos tx hash.”
 

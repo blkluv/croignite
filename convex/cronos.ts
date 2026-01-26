@@ -7,7 +7,7 @@ import { cronos } from "../src/lib/web3/cronosConstants";
 function requireCronosRpcUrl() {
   const rpcUrl =
     getEnv("CRONOS_TESTNET_RPC_URL") ??
-    getEnv("NEXT_PUBLIC_CRONOS_RPC_URL") ??
+    getEnv("NEXT_PUBLIC_CRONOS_TESTNET_RPC_URL") ??
     cronos.testnet.rpcUrl;
   if (!rpcUrl) {
     throw new Error("Missing Cronos RPC URL.");
